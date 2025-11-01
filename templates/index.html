@@ -1,0 +1,353 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Extractor de Programas de Reunión - JW.org</title>
+    <style>
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            min-height: 100vh;
+            padding: 20px;
+        }
+        .container { max-width: 1200px; margin: 0 auto; }
+        header {
+            background: white;
+            padding: 30px;
+            border-radius: 15px;
+            box-shadow: 0 10px 40px rgba(0,0,0,0.2);
+            margin-bottom: 30px;
+            text-align: center;
+        }
+        h1 { color: #667eea; font-size: 2.5em; margin-bottom: 10px; }
+        .subtitle { color: #666; font-size: 1.1em; }
+        .main-card {
+            background: white;
+            padding: 30px;
+            border-radius: 15px;
+            box-shadow: 0 10px 40px rgba(0,0,0,0.2);
+            margin-bottom: 20px;
+        }
+        .controls { display: grid; gap: 20px; margin-bottom: 30px; }
+        .input-group { display: flex; flex-direction: column; gap: 8px; }
+        label { font-weight: 600; color: #333; font-size: 0.95em; }
+        input[type="text"] {
+            padding: 12px 15px;
+            border: 2px solid #e0e0e0;
+            border-radius: 8px;
+            font-size: 1em;
+            transition: all 0.3s;
+        }
+        input[type="text"]:focus {
+            outline: none;
+            border-color: #667eea;
+            box-shadow: 0 0 0 3px rgba(102, 126, 234, 0.1);
+        }
+        .btn {
+            padding: 14px 28px;
+            border: none;
+            border-radius: 8px;
+            font-size: 1em;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.3s;
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            gap: 8px;
+        }
+        .btn-primary {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+        }
+        .btn-primary:hover { transform: translateY(-2px); box-shadow: 0 5px 20px rgba(102, 126, 234, 0.4); }
+        .btn-primary:disabled { opacity: 0.6; cursor: not-allowed; transform: none; }
+        .btn-secondary { background: #f0f0f0; color: #333; }
+        .btn-secondary:hover { background: #e0e0e0; }
+        .btn-success { background: #28a745; color: white; }
+        .btn-success:hover { background: #218838; }
+        .btn-small { padding: 8px 16px; font-size: 0.9em; }
+        .loading { display: none; text-align: center; padding: 40px; }
+        .loading.active { display: block; }
+        .spinner {
+            border: 4px solid #f3f3f3;
+            border-top: 4px solid #667eea;
+            border-radius: 50%;
+            width: 50px;
+            height: 50px;
+            animation: spin 1s linear infinite;
+            margin: 0 auto 20px;
+        }
+        @keyframes spin {
+            0% { transform: rotate(0deg); }
+            100% { transform: rotate(360deg); }
+        }
+        .semanas-lista { display: none; margin-top: 20px; }
+        .semanas-lista.active { display: block; }
+        .lista-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 15px;
+        }
+        .lista-header h3 { color: #333; }
+        .semana-item {
+            background: #f8f9fa;
+            padding: 15px;
+            margin-bottom: 10px;
+            border-radius: 8px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            transition: all 0.3s;
+        }
+        .semana-item:hover { background: #e9ecef; transform: translateX(5px); }
+        .semana-titulo { font-weight: 500; color: #333; }
+        .semana-acciones { display: flex; gap: 10px; }
+        .resultado {
+            display: none;
+            margin-top: 30px;
+            padding: 20px;
+            background: #f8f9fa;
+            border-radius: 8px;
+        }
+        .resultado.active { display: block; }
+        .resultado-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 20px;
+            padding-bottom: 15px;
+            border-bottom: 2px solid #dee2e6;
+        }
+        .resultado-titulo { font-size: 1.3em; font-weight: 600; color: #667eea; }
+        .datos-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+            gap: 15px;
+            margin-bottom: 20px;
+        }
+        .dato-item {
+            background: white;
+            padding: 15px;
+            border-radius: 8px;
+            border-left: 4px solid #667eea;
+        }
+        .dato-label {
+            font-size: 0.85em;
+            color: #666;
+            margin-bottom: 5px;
+            text-transform: uppercase;
+            font-weight: 600;
+        }
+        .dato-valor { font-size: 1.1em; color: #333; font-weight: 500; }
+        .partes-seccion { margin-top: 25px; }
+        .seccion-titulo {
+            font-size: 1.2em;
+            font-weight: 600;
+            color: white;
+            margin-bottom: 15px;
+            padding: 10px;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            border-radius: 6px;
+        }
+        .parte-item {
+            background: white;
+            padding: 12px;
+            margin-bottom: 8px;
+            border-radius: 6px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+        .parte-titulo { color: #333; }
+        .parte-duracion {
+            background: #e9ecef;
+            padding: 4px 12px;
+            border-radius: 4px;
+            font-weight: 600;
+            color: #667eea;
+        }
+        .alert {
+            padding: 15px 20px;
+            border-radius: 8px;
+            margin-bottom: 20px;
+        }
+        .alert-error { background: #fee; color: #c33; border-left: 4px solid #c33; }
+        .alert-success { background: #efe; color: #3c3; border-left: 4px solid #3c3; }
+        .alert-info { background: #eef; color: #33c; border-left: 4px solid #33c; }
+        @media (max-width: 768px) {
+            h1 { font-size: 1.8em; }
+            .datos-grid { grid-template-columns: 1fr; }
+            .semana-item { flex-direction: column; gap: 10px; align-items: flex-start; }
+            .semana-acciones { width: 100%; }
+            .btn-small { flex: 1; }
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <header>
+            <h1>📋 Extractor de Programas de Reunión</h1>
+            <p class="subtitle">Extrae y visualiza programas de reuniones de JW.org</p>
+        </header>
+        <div class="main-card">
+            <div class="controls">
+                <div class="input-group">
+                    <label for="urlIndice">URL del Índice de JW.org</label>
+                    <input type="text" id="urlIndice" placeholder="https://www.jw.org/es/biblioteca/guia-actividades-reunion-testigos-jehova/" value="https://www.jw.org/es/biblioteca/guia-actividades-reunion-testigos-jehova/">
+                    <small style="color: #666; font-size: 0.85em;">💡 Puedes cambiar la URL para extraer de otros idiomas o años específicos</small>
+                </div>
+                <div class="input-group">
+                    <label for="nombreCongregacion">Nombre de la Congregación</label>
+                    <input type="text" id="nombreCongregacion" placeholder="Ej: Congregación Centro" value="CONGREGACIÓN">
+                </div>
+                <div style="display: flex; gap: 10px; flex-wrap: wrap;">
+                    <button class="btn btn-primary" onclick="cargarSemanas()">🔍 Buscar Semanas Disponibles</button>
+                    <button class="btn btn-secondary" onclick="limpiarResultados()">🗑️ Limpiar</button>
+                </div>
+            </div>
+            <div id="loading" class="loading">
+                <div class="spinner"></div>
+                <p>Cargando datos...</p>
+            </div>
+            <div id="alertContainer"></div>
+            <div id="semanasLista" class="semanas-lista"></div>
+            <div id="resultado" class="resultado"></div>
+        </div>
+    </div>
+    <script>
+        const API_URL = '';
+        let semanasDisponibles = [];
+        let semanaActual = null;
+        function mostrarAlerta(tipo, mensaje) {
+            const container = document.getElementById('alertContainer');
+            container.innerHTML = `<div class="alert alert-${tipo}">${mensaje}</div>`;
+            setTimeout(() => container.innerHTML = '', 8000);
+        }
+        function mostrarCarga(mostrar) {
+            document.getElementById('loading').classList.toggle('active', mostrar);
+        }
+        async function cargarSemanas() {
+            mostrarCarga(true);
+            const urlIndice = document.getElementById('urlIndice').value.trim();
+            if (!urlIndice) {
+                mostrarAlerta('error', '❌ Por favor ingresa una URL válida');
+                mostrarCarga(false);
+                return;
+            }
+            try {
+                const response = await fetch(`${API_URL}/api/semanas`, {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ url: urlIndice })
+                });
+                const data = await response.json();
+                if (data.success) {
+                    semanasDisponibles = data.semanas;
+                    mostrarAlerta('success', `✅ Se encontraron ${data.total} semanas disponibles`);
+                    mostrarSemanas(data.semanas);
+                } else {
+                    mostrarAlerta('error', `❌ Error: ${data.error}`);
+                }
+            } catch (error) {
+                mostrarAlerta('error', `❌ No se puede conectar al servidor`);
+            } finally {
+                mostrarCarga(false);
+            }
+        }
+        function mostrarSemanas(semanas) {
+            const container = document.getElementById('semanasLista');
+            if (semanas.length === 0) {
+                container.innerHTML = '<p>No se encontraron semanas disponibles</p>';
+                container.classList.add('active');
+                return;
+            }
+            let html = `<div class="lista-header"><h3>📅 Semanas Disponibles (${semanas.length})</h3><button class="btn btn-success btn-small" onclick="extraerTodas()">⬇️ Extraer Todas</button></div>`;
+            semanas.forEach((semana, index) => {
+                html += `<div class="semana-item"><div class="semana-titulo">${index + 1}. ${semana.titulo}</div><div class="semana-acciones"><button class="btn btn-primary btn-small" onclick="extraerSemana('${semana.url}', '${semana.titulo}', '${semana.id}')">📥 Extraer</button></div></div>`;
+            });
+            container.innerHTML = html;
+            container.classList.add('active');
+        }
+        async function extraerSemana(url, titulo, semanaId) {
+            mostrarCarga(true);
+            try {
+                const response = await fetch(`${API_URL}/api/extraer`, {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ url: url })
+                });
+                const data = await response.json();
+                if (data.success) {
+                    semanaActual = data.semana_id;
+                    mostrarAlerta('success', `✅ Datos extraídos correctamente: ${titulo}`);
+                    mostrarResultado(data.datos);
+                } else {
+                    mostrarAlerta('error', `❌ Error: ${data.error}`);
+                }
+            } catch (error) {
+                mostrarAlerta('error', `❌ Error: ${error.message}`);
+            } finally {
+                mostrarCarga(false);
+            }
+        }
+        function mostrarResultado(datos) {
+            const container = document.getElementById('resultado');
+            let html = `<div class="resultado-header"><div class="resultado-titulo">${datos.fecha}</div><button class="btn btn-success btn-small" onclick="descargarPlantilla()">💾 Descargar Plantilla HTML</button></div><div class="datos-grid"><div class="dato-item"><div class="dato-label">Fecha</div><div class="dato-valor">${datos.fecha}</div></div><div class="dato-item"><div class="dato-label">Lectura Bíblica</div><div class="dato-valor">${datos.lectura_biblica}</div></div><div class="dato-item"><div class="dato-label">Canción Inicial</div><div class="dato-valor">#${datos.cancion_inicial}</div></div><div class="dato-item"><div class="dato-label">Canción Intermedia</div><div class="dato-valor">#${datos.cancion_intermedia}</div></div><div class="dato-item"><div class="dato-label">Canción Final</div><div class="dato-valor">#${datos.cancion_final}</div></div><div class="dato-item"><div class="dato-label">Palabras Intro/Conclusión</div><div class="dato-valor">${datos.palabras_introduccion}min / ${datos.palabras_conclusion}min</div></div></div><div class="partes-seccion"><div class="seccion-titulo">📖 TESOROS DE LA BIBLIA</div>${mostrarPartes(datos.tesoros_biblia)}</div><div class="partes-seccion"><div class="seccion-titulo">🎓 SEAMOS MEJORES MAESTROS</div>${mostrarPartes(datos.seamos_maestros)}</div><div class="partes-seccion"><div class="seccion-titulo">❤️ NUESTRA VIDA CRISTIANA</div>${mostrarPartes(datos.vida_cristiana)}</div>`;
+            container.innerHTML = html;
+            container.classList.add('active');
+        }
+        function mostrarPartes(partes) {
+            if (!partes || partes.length === 0) return '<p>No hay partes disponibles</p>';
+            return partes.map(parte => `<div class="parte-item"><div class="parte-titulo">${parte.numero}. ${parte.titulo}</div><div class="parte-duracion">${parte.duracion} min</div></div>`).join('');
+        }
+        function descargarPlantilla() {
+            if (!semanaActual) {
+                mostrarAlerta('error', '❌ No hay datos extraídos');
+                return;
+            }
+            const congregacion = document.getElementById('nombreCongregacion').value.trim();
+            window.location.href = `${API_URL}/api/descargar-plantilla/${semanaActual}?congregacion=${encodeURIComponent(congregacion)}`;
+        }
+        async function extraerTodas() {
+            if (semanasDisponibles.length === 0) {
+                mostrarAlerta('error', '❌ No hay semanas cargadas');
+                return;
+            }
+            if (!confirm(`¿Deseas extraer todas las ${semanasDisponibles.length} semanas?`)) return;
+            mostrarCarga(true);
+            mostrarAlerta('info', `⏳ Extrayendo ${semanasDisponibles.length} semanas...`);
+            try {
+                const urls = semanasDisponibles.map(s => s.url);
+                const response = await fetch(`${API_URL}/api/extraer-multiples`, {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ urls: urls })
+                });
+                const data = await response.json();
+                if (data.success) {
+                    mostrarAlerta('success', `✅ Completado: ${data.exitosos} exitosos, ${data.fallidos} fallidos`);
+                } else {
+                    mostrarAlerta('error', `❌ Error: ${data.error}`);
+                }
+            } catch (error) {
+                mostrarAlerta('error', `❌ Error: ${error.message}`);
+            } finally {
+                mostrarCarga(false);
+            }
+        }
+        function limpiarResultados() {
+            document.getElementById('semanasLista').innerHTML = '';
+            document.getElementById('semanasLista').classList.remove('active');
+            document.getElementById('resultado').innerHTML = '';
+            document.getElementById('resultado').classList.remove('active');
+            document.getElementById('alertContainer').innerHTML = '';
+            semanasDisponibles = [];
+            semanaActual = null;
+        }
+    </script>
+</body>
+</html>
